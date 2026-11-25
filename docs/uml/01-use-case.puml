@@ -1,0 +1,50 @@
+@startuml
+!include _style.iuml
+left to right direction
+actor "Гість" as Guest
+actor "Мандрівник\n(USER)" as User
+actor "Адміністратор\n(ADMIN)" as Admin
+User -|> Guest
+Admin -|> User
+
+rectangle "Інформаційна система Traveler" {
+  usecase "Переглянути каталог\nпублічних маршрутів" as UC1
+  usecase "Знайти план за назвою,\nмісцем, датами, бюджетом" as UC2
+  usecase "Переглянути план:\nмаршрут, карта, підсумок" as UC3
+  usecase "Зареєструватися" as UC4
+  usecase "Увійти / вийти" as UC5
+
+  usecase "Керувати власними\nпланами (CRUD)" as UC6
+  usecase "Скласти маршрут:\nдодати локацію" as UC7
+  usecase "Змінити порядок\nлокацій" as UC8
+  usecase "Редагувати / видалити\nлокацію" as UC9
+  usecase "Опублікувати /\nприховати план" as UC10
+  usecase "Скопіювати публічний\nмаршрут" as UC11
+
+  usecase "Керувати будь-якими\nпланами (повний контроль)" as UC12
+  usecase "Керувати користувачами:\nроль, блокування" as UC13
+  usecase "Переглянути статистику\nі стан системи" as UC14
+  usecase "Працювати з вузлами\nSpring Boot Actuator" as UC15
+
+  usecase "Автоматично визначити\nпозицію в маршруті" as UCa
+  usecase "Перевірити версію запису\n(оптимістичне блокування)" as UCb
+}
+Guest --> UC1
+Guest --> UC2
+Guest --> UC3
+Guest --> UC4
+Guest --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+User --> UC10
+User --> UC11
+Admin --> UC12
+Admin --> UC13
+Admin --> UC14
+Admin --> UC15
+UC7 ..> UCa : <<include>>
+UC6 ..> UCb : <<include>>
+UC9 ..> UCb : <<include>>
+@enduml

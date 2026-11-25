@@ -1,0 +1,9 @@
+!theme plain
+!pragma layout smetana
+skinparam dpi 220
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundCorner 6
+skinparam ArrowColor #222222
+skinparam packageStyle rectangle

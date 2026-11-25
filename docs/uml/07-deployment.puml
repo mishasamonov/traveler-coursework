@@ -1,0 +1,16 @@
+@startuml
+!include _style.iuml
+node "Комп'ютер розробника (Windows 11)" {
+  node "IntelliJ IDEA / JBR 25" {
+    artifact "traveler.jar\nSpring Boot :8088" as App
+  }
+  node "Docker Desktop (compose traveler-coursework)" {
+    database "postgres:16.15-alpine\n:5433 → 5432\nБД traveler, traveler_test" as PG
+    node "traveler-api:lab3 (профіль dds)\nNode.js :4567" as Api
+  }
+  node "Браузер" as Br
+}
+Br --> App : HTTP :8088
+App --> PG : JDBC
+Api --> PG : node-postgres
+@enduml

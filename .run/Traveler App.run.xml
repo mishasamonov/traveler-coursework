@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Traveler App" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="ua.edu.sumdu.traveler.web.TravelerApplication" />
+    <module name="traveler-web" />
+    <option name="VM_PARAMETERS" value="-Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/traveler-web" />
+    <method v="2"><option name="Make" enabled="true" /></method>
+  </configuration>
+</component>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Реєстрація')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('register')}"></header>
+<main class="page">
+  <div class="narrow">
+    <h1>Реєстрація мандрівника</h1>
+    <p class="muted">Після реєстрації ви зможете створювати плани, будувати маршрути та копіювати публічні маршрути.</p>
+
+    <form class="card form" method="post" th:action="@{/register}" th:object="${form}" novalidate>
+      <div class="alert error" th:if="${#fields.hasGlobalErrors()}">
+        <span th:each="e : ${#fields.globalErrors()}" th:text="${e}">Помилка</span>
+      </div>
+      <div class="field" th:classappend="${#fields.hasErrors('email')} ? 'error'">
+        <label for="email">Електронна пошта</label>
+        <input type="email" id="email" th:field="*{email}" autocomplete="username">
+        <div class="field-error" th:errors="*{email}">Помилка</div>
+      </div>
+      <div class="field" th:classappend="${#fields.hasErrors('displayName')} ? 'error'">
+        <label for="displayName">Ім'я</label>
+        <input type="text" id="displayName" th:field="*{displayName}" autocomplete="name">
+        <div class="field-error" th:errors="*{displayName}">Помилка</div>
+      </div>
+      <div class="field" th:classappend="${#fields.hasErrors('password')} ? 'error'">
+        <label for="password">Пароль</label>
+        <input type="password" id="password" th:field="*{password}" autocomplete="new-password">
+        <div class="hint">Від 8 символів, обов'язково літери й цифри.</div>
+        <div class="field-error" th:errors="*{password}">Помилка</div>
+      </div>
+      <div class="field" th:classappend="${#fields.hasErrors('confirmPassword')} ? 'error'">
+        <label for="confirmPassword">Повторіть пароль</label>
+        <input type="password" id="confirmPassword" th:field="*{confirmPassword}" autocomplete="new-password">
+        <div class="field-error" th:errors="*{confirmPassword}">Помилка</div>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" type="submit">Зареєструватися</button>
+        <a class="btn ghost" th:href="@{/login}">Уже маю обліковий запис</a>
+      </div>
+    </form>
+  </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

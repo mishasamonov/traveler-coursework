@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Користувачі')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('admin')}"></header>
+<main class="page">
+  <div class="crumbs"><a th:href="@{/admin}">Адміністрування</a> / Користувачі</div>
+  <div class="page-head">
+    <div>
+      <h1>Користувачі</h1>
+      <p class="muted">Зміна ролі та блокування. Заблокований користувач не може увійти, його активні сесії завершуються.</p>
+    </div>
+  </div>
+  <div th:replace="~{fragments/layout :: flash}"></div>
+
+  <div class="card card-flush">
+    <table class="data">
+      <thead>
+      <tr><th>Користувач</th><th>Роль</th><th>Стан</th><th>Зареєстровано</th><th>Дії</th></tr>
+      </thead>
+      <tbody>
+      <tr th:each="u : ${users}" th:with="self=${u.id == #authentication.principal.id}">
+        <td><b th:text="${u.displayName}">Ім'я</b><br><span class="small muted" th:text="${u.email}">email</span></td>
+        <td><span class="badge" th:classappend="${u.role.name()}" th:text="${u.role.label()}">Роль</span></td>
+        <td><span class="badge" th:classappend="${u.enabled} ? 'UP' : 'blocked'"
+                  th:text="${u.enabled} ? 'Активний' : 'Заблокований'">Стан</span></td>
+        <td class="small muted" th:text="${@fmt.instant(u.createdAt)}">дата</td>
+        <td>
+          <span class="small muted" th:if="${self}">це ви</span>
+          <div class="actions" th:unless="${self}">
+            <form th:action="@{/admin/users/{id}/role(id=${u.id})}" method="post">
+              <input type="hidden" name="role" th:value="${u.isAdmin()} ? 'USER' : 'ADMIN'">
+              <button class="btn sm" type="submit"
+                      th:text="${u.isAdmin()} ? 'Зробити мандрівником' : 'Зробити адміністратором'">Роль</button>
+            </form>
+            <form th:action="@{/admin/users/{id}/enabled(id=${u.id})}" method="post">
+              <input type="hidden" name="enabled" th:value="${!u.enabled}">
+              <button class="btn sm" th:classappend="${u.enabled} ? 'danger'" type="submit"
+                      th:text="${u.enabled} ? 'Заблокувати' : 'Розблокувати'">Блок</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

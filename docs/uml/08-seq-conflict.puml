@@ -1,0 +1,21 @@
+@startuml
+!include _style.iuml
+autonumber
+actor "Вкладка 1" as T1
+actor "Вкладка 2" as T2
+participant "PlanController" as C
+participant "TravelPlanService" as S
+database "travel_plans" as DB
+T1 -> C : GET /plans/{id}/edit
+C --> T1 : форма, version = 1
+T2 -> C : GET /plans/{id}/edit
+C --> T2 : форма, version = 1
+T1 -> C : POST /plans/{id} (version = 1)
+C -> S : update(..., version 1)
+S -> DB : UPDATE ... SET version = 2\nWHERE id = ? AND version = 1
+C --> T1 : «Зміни збережено»
+T2 -> C : POST /plans/{id} (version = 1)
+C -> S : update(..., version 1)
+S -> S : 1 ≠ 2 → ConflictException
+C --> T2 : форма з повідомленням про конфлікт,\nдані вкладки 1 не перезаписано
+@enduml

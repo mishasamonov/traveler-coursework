@@ -1,0 +1,36 @@
+### TravelerAPI (Node.js, laboratory works «Розподілені сховища даних») on the SAME database.
+### Start: docker compose --profile dds up -d
+
+### 1. Health of the REST API
+GET http://localhost:4567/health
+
+### 2. A plan created through the REST API of the labs (it has no owner in Traveler)
+POST http://localhost:4567/api/travel-plans
+Content-Type: application/json
+
+{
+  "title": "Чернігів: маршрут вихідного дня (TravelerAPI)",
+  "description": "План створено через REST API лабораторних робіт з РСД.",
+  "start_date": "2027-09-11",
+  "end_date": "2027-09-12",
+  "budget": 4000,
+  "currency": "UAH",
+  "is_public": true
+}
+
+> {% client.global.set("planId", response.body.id); %}
+
+### 3. Locations: visit_order is assigned by the API in the same way as in Traveler
+POST http://localhost:4567/api/travel-plans/{{planId}}/locations
+Content-Type: application/json
+
+{ "name": "Чернігівський Вал", "latitude": 51.4870, "longitude": 31.3055, "budget": 0 }
+
+###
+POST http://localhost:4567/api/travel-plans/{{planId}}/locations
+Content-Type: application/json
+
+{ "name": "Антонієві печери", "latitude": 51.4815, "longitude": 31.2737, "budget": 120 }
+
+### 4. The plan with its route as the REST API returns it
+GET http://localhost:4567/api/travel-plans/{{planId}}

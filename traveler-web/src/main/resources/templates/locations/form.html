@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      th:with="title=${location == null} ? 'Нова локація маршруту' : 'Редагування локації'">
+<head th:replace="~{fragments/layout :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('my')}"></header>
+<main class="page" style="max-width: 860px">
+  <div class="crumbs">
+    <a th:href="@{/my/plans}">Мої подорожі</a> /
+    <a th:href="@{/plans/{id}(id=${plan.id})}" th:text="${plan.title}">План</a> /
+    <span th:text="${title}">Нова локація</span>
+  </div>
+  <h1 th:text="${title}">Нова локація маршруту</h1>
+  <p class="muted" th:if="${location == null}">Локація буде додана в кінець маршруту — її позицію система визначить автоматично.</p>
+  <p class="muted" th:if="${plan.startDate != null}"
+     th:text="'Дати подорожі: ' + ${@fmt.period(plan.startDate, plan.endDate)}">Дати</p>
+
+  <form class="card form" method="post" th:object="${form}" novalidate
+        th:action="${location == null} ? @{/plans/{id}/locations(id=${plan.id})} : @{/locations/{id}(id=${location.id})}">
+    <div class="alert error" th:if="${#fields.hasGlobalErrors()}">
+      <span th:each="e : ${#fields.globalErrors()}" th:text="${e}">Помилка</span>
+      <div th:if="${conflict}" style="margin-top:6px">
+        <a th:href="@{/locations/{id}/edit(id=${location.id})}">Відкрити актуальну версію</a>
+      </div>
+    </div>
+    <input type="hidden" th:field="*{version}">
+
+    <div class="form-row">
+      <div class="field" th:classappend="${#fields.hasErrors('name')} ? 'error'">
+        <label for="name">Назва локації *</label>
+        <input type="text" id="name" th:field="*{name}" maxlength="200" placeholder="Наприклад, Високий Замок">
+        <div class="field-error" th:errors="*{name}">Помилка</div>
+      </div>
+      <div class="field" th:if="${location != null}" th:classappend="${#fields.hasErrors('visitOrder')} ? 'error'">
+        <label for="visitOrder">Позиція в маршруті</label>
+        <select id="visitOrder" th:field="*{visitOrder}">
+          <option th:each="i : ${#numbers.sequence(1, routeSize)}" th:value="${i}" th:text="${i}">1</option>
+        </select>
+        <div class="hint">Інші локації зсунуться, щоб звільнити місце.</div>
+        <div class="field-error" th:errors="*{visitOrder}">Помилка</div>
+      </div>
+    </div>
+
+    <div class="field" th:classappend="${#fields.hasErrors('address')} ? 'error'">
+      <label for="address">Адреса</label>
+      <input type="text" id="address" th:field="*{address}" placeholder="Місто, вулиця">
+      <div class="field-error" th:errors="*{address}">Помилка</div>
+    </div>
+
+    <div class="form-row">
+      <div class="field" th:classappend="${#fields.hasErrors('latitude')} ? 'error'">
+        <label for="latitude">Широта</label>
+        <input type="number" id="latitude" step="0.000001" min="-90" max="90" th:field="*{latitude}" placeholder="49.841900">
+        <div class="field-error" th:errors="*{latitude}">Помилка</div>
+      </div>
+      <div class="field" th:classappend="${#fields.hasErrors('longitude')} ? 'error'">
+        <label for="longitude">Довгота</label>
+        <input type="number" id="longitude" step="0.000001" min="-180" max="180" th:field="*{longitude}" placeholder="24.031600">
+        <div class="hint">Координати потрібні для карти та підрахунку відстаней.</div>
+        <div class="field-error" th:errors="*{longitude}">Помилка</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="field" th:classappend="${#fields.hasErrors('arrivalDate')} ? 'error'">
+        <label for="arrivalDate">Прибуття</label>
+        <input type="datetime-local" id="arrivalDate" th:field="*{arrivalDate}">
+        <div class="field-error" th:errors="*{arrivalDate}">Помилка</div>
+      </div>
+      <div class="field" th:classappend="${#fields.hasErrors('departureDate')} ? 'error'">
+        <label for="departureDate">Відбуття</label>
+        <input type="datetime-local" id="departureDate" th:field="*{departureDate}">
+        <div class="field-error" th:errors="*{departureDate}">Помилка</div>
+      </div>
+    </div>
+
+    <div class="field" th:classappend="${#fields.hasErrors('budget')} ? 'error'">
+      <label for="budget" th:text="'Заплановані витрати, ' + ${plan.currency}">Витрати</label>
+      <input type="number" id="budget" min="0" step="0.01" th:field="*{budget}" placeholder="0.00">
+      <div class="field-error" th:errors="*{budget}">Помилка</div>
+    </div>
+
+    <div class="field" th:classappend="${#fields.hasErrors('notes')} ? 'error'">
+      <label for="notes">Примітки</label>
+      <textarea id="notes" th:field="*{notes}" placeholder="Квитки, години роботи, що взяти з собою"></textarea>
+      <div class="field-error" th:errors="*{notes}">Помилка</div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn primary" type="submit" th:text="${location == null} ? 'Додати до маршруту' : 'Зберегти'">Зберегти</button>
+      <a class="btn ghost" th:href="@{/plans/{id}(id=${plan.id})}">Скасувати</a>
+    </div>
+  </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

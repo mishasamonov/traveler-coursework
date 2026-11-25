@@ -1,0 +1,46 @@
+@startuml
+!include _style.iuml
+skinparam componentStyle rectangle
+actor "Користувач\n(браузер)" as Browser
+node "JVM: traveler.jar (Spring Boot 3.3, порт 8088)" {
+  package "traveler-web — шар представлення" as Web {
+    [Spring Security\n(SecurityFilterChain,\nAppUserDetailsService)] as Sec
+    [Контролери Spring MVC\nPlan / Location / Admin /\nAuth / Home] as Ctrl
+    [Форми й валідація\n(Bean Validation,\n@DateRange, @FieldsMatch)] as Forms
+    [Шаблони Thymeleaf\n+ Leaflet-карта] as Views
+    [GlobalExceptionHandler] as Err
+    [Моніторинг: HealthIndicator,\nInfoContributor, @Endpoint travel,\nаспект метрик сервісів] as Mon
+  }
+  package "traveler-core — бізнес-логіка" as Core {
+    [TravelPlanService\nLocationService\nUserService\nRouteCalculator] as Svc
+    [Предметна модель\n(records)] as Domain
+    [Порти доступу до даних (інтерфейси):\nTravelPlanPort, LocationPort,\nUserPort, PasswordHasher] as Ports
+  }
+  package "traveler-persistence — доступ до даних" as Persist {
+    [JPA-адаптери портів] as Adapters
+    [Spring Data репозиторії\n+ Specifications] as Repos
+    [JPA-сутності] as Entities
+    [Flyway-міграції V1–V3] as Flyway
+  }
+  [Spring Boot Actuator\n/actuator/*] as Act
+}
+database "PostgreSQL 16\nБД traveler\n(travel_plans, locations,\napp_users)" as DB
+node "TravelerAPI (Node.js)\nлабораторні з РСД" as Api
+
+Browser --> Sec : HTTP
+Sec --> Ctrl
+Ctrl --> Forms
+Ctrl --> Views
+Ctrl --> Svc
+Ctrl ..> Err
+Mon --> Svc
+Act --> Mon
+Svc --> Domain
+Svc --> Ports
+Adapters ..|> Ports
+Adapters --> Repos
+Repos --> Entities
+Repos --> DB : JDBC (HikariCP)
+Flyway --> DB
+Api --> DB : та сама\nсхема таблиць
+@enduml

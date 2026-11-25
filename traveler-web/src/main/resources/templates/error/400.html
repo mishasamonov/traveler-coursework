@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Некоректний запит')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('error')}"></header>
+<main class="page">
+  <div class="card error-page">
+    <div class="code">400</div>
+    <h1>Некоректний запит</h1>
+    <p class="muted" th:text="${message} ?: 'Перевірте введені дані або посилання.'">Перевірте введені дані або посилання.</p>
+    
+    <div class="actions" style="justify-content:center">
+      <a class="btn primary" th:href="@{/}">На головну</a>
+      <a class="btn" th:href="@{/plans}">Каталог маршрутів</a>
+    </div>
+  </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

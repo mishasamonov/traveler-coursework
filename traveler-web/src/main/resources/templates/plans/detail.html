@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${plan.title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header(${details.editable} ? 'my' : 'catalog')}"></header>
+<main class="page">
+  <div class="crumbs">
+    <a th:if="${details.editable}" th:href="@{/my/plans}">Мої подорожі</a>
+    <a th:unless="${details.editable}" th:href="@{/plans}">Каталог маршрутів</a>
+    / <span th:text="${plan.title}">План</span>
+  </div>
+
+  <div class="page-head">
+    <div>
+      <h1 th:text="${plan.title}">Назва плану</h1>
+      <div class="actions">
+        <span class="badge" th:classappend="${details.status.name()}" th:text="${details.status.label()}">Статус</span>
+        <span class="badge" th:classappend="${plan.isPublic} ? 'public' : 'private'"
+              th:text="${plan.isPublic} ? 'Публічний' : 'Приватний'">Доступ</span>
+        <span class="muted small" th:text="${@fmt.period(plan.startDate, plan.endDate)}">дати</span>
+        <span class="muted small">· автор: <b th:text="${details.ownerName} ?: 'без власника (створено через TravelerAPI)'">автор</b></span>
+      </div>
+    </div>
+    <div class="actions">
+      <form th:if="${details.copyable}" th:action="@{/plans/{id}/copy(id=${plan.id})}" method="post">
+        <button class="btn" type="submit" th:text="${details.editable} ? 'Створити копію' : 'Скопіювати до моїх подорожей'">Скопіювати</button>
+      </form>
+      <th:block th:if="${details.editable}">
+        <a class="btn" th:href="@{/plans/{id}/edit(id=${plan.id})}">Редагувати</a>
+        <form th:action="@{/plans/{id}/visibility(id=${plan.id})}" method="post">
+          <input type="hidden" name="version" th:value="${plan.version}">
+          <input type="hidden" name="publish" th:value="${!plan.isPublic}">
+          <button class="btn" type="submit" th:text="${plan.isPublic} ? 'Приховати з каталогу' : 'Опублікувати'">Опублікувати</button>
+        </form>
+        <form th:action="@{/plans/{id}/delete(id=${plan.id})}" method="post"
+              onsubmit="return confirm('Видалити план разом з усіма локаціями маршруту?');">
+          <button class="btn danger" type="submit">Видалити</button>
+        </form>
+      </th:block>
+    </div>
+  </div>
+
+  <div th:replace="~{fragments/layout :: flash}"></div>
+
+  <div class="grid-2">
+    <div class="stack">
+      <div class="card" th:if="${plan.description}">
+        <p style="margin:0" th:text="${plan.description}">Опис</p>
+      </div>
+
+      <div class="card card-flush">
+        <div id="map"><div class="map-empty" th:if="${mapPoints.isEmpty()}">Немає локацій з координатами</div></div>
+      </div>
+
+      <div class="card card-flush" id="route">
+        <div class="card-head">
+          <h2>Маршрут</h2>
+          <a class="btn primary sm" th:if="${details.editable}"
+             th:href="@{/plans/{id}/locations/new(id=${plan.id})}">+ Додати локацію</a>
+        </div>
+        <div class="empty" th:if="${details.locations.isEmpty()}">
+          <h3>Маршрут порожній</h3>
+          <p th:if="${details.editable}">Додайте першу локацію — вона отримає позицію 1.</p>
+        </div>
+        <table class="data" th:unless="${details.locations.isEmpty()}">
+          <thead>
+          <tr><th>№</th><th>Локація</th><th>Час</th><th class="num" title="Відстань від попередньої локації">Відстань</th>
+            <th class="num">Витрати</th><th th:if="${details.editable}"></th></tr>
+          </thead>
+          <tbody>
+          <tr th:each="l, it : ${details.locations}">
+            <td><span class="order" th:text="${l.visitOrder}">1</span></td>
+            <td>
+              <div class="route-name" th:text="${l.name}">Назва</div>
+              <div class="small muted" th:if="${l.address}" th:text="${l.address}">Адреса</div>
+              <div class="small" th:if="${l.notes}" th:text="${l.notes}">Примітки</div>
+              <div class="small muted" th:unless="${l.hasCoordinates()}">координати не вказано</div>
+            </td>
+            <td class="small time" th:text="${@fmt.visit(l.arrivalDate, l.departureDate)}">час</td>
+            <td class="num small">
+              <span th:if="${summary.legDistancesKm[it.index] != null}" th:text="${@fmt.km(summary.legDistancesKm[it.index])}">0 км</span>
+              <span class="leg" th:if="${summary.legDistancesKm[it.index] == null}">—</span>
+            </td>
+            <td class="num" th:text="${@fmt.money(l.budget, plan.currency)}">0</td>
+            <td th:if="${details.editable}">
+              <div class="route-tools">
+                <form th:action="@{/locations/{id}/move(id=${l.id})}" method="post">
+                  <input type="hidden" name="direction" value="UP">
+                  <input type="hidden" name="version" th:value="${l.version}">
+                  <input type="hidden" name="planId" th:value="${plan.id}">
+                  <button class="btn icon sm" type="submit" title="Перемістити вище" th:disabled="${it.first}">↑</button>
+                </form>
+                <form th:action="@{/locations/{id}/move(id=${l.id})}" method="post">
+                  <input type="hidden" name="direction" value="DOWN">
+                  <input type="hidden" name="version" th:value="${l.version}">
+                  <input type="hidden" name="planId" th:value="${plan.id}">
+                  <button class="btn icon sm" type="submit" title="Перемістити нижче" th:disabled="${it.last}">↓</button>
+                </form>
+                <a class="btn icon sm" th:href="@{/locations/{id}/edit(id=${l.id})}" title="Редагувати">✎</a>
+                <form th:action="@{/locations/{id}/delete(id=${l.id})}" method="post"
+                      onsubmit="return confirm('Видалити локацію з маршруту?');">
+                  <input type="hidden" name="planId" th:value="${plan.id}">
+                  <button class="btn icon sm danger" type="submit" title="Видалити">✕</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="stack">
+      <div class="card">
+        <h3>Підсумок маршруту</h3>
+        <dl class="facts-list">
+          <div><dt>Тривалість</dt><dd th:text="${@fmt.days(summary.tripDays)}">—</dd></div>
+          <div><dt>Локацій</dt><dd th:text="${summary.locationCount}">0</dd></div>
+          <div><dt>Довжина маршруту</dt><dd th:text="${@fmt.km(summary.totalDistanceKm)}">0 км</dd></div>
+          <div><dt>Бюджет подорожі</dt><dd th:text="${@fmt.money(summary.budget, plan.currency)}">—</dd></div>
+          <div><dt>Заплановано на локації</dt><dd th:text="${@fmt.money(summary.plannedSpend, plan.currency)}">0</dd></div>
+          <div th:if="${summary.remaining != null}"><dt th:text="${summary.overBudget} ? 'Перевищення' : 'Залишок'">Залишок</dt>
+            <dd th:style="${summary.overBudget} ? 'color: var(--danger)'"
+                th:text="${@fmt.money(summary.remaining.abs(), plan.currency)}">0</dd></div>
+        </dl>
+        <th:block th:if="${summary.budgetUsagePercent != null}">
+          <div class="meter" th:classappend="${summary.overBudget} ? 'over'">
+            <span th:style="'width:' + ${@fmt.bar(summary.budgetUsagePercent)} + '%'"></span>
+          </div>
+          <div class="small muted" th:text="'Використано ' + ${@fmt.percent(summary.budgetUsagePercent)} + ' бюджету'">0%</div>
+        </th:block>
+      </div>
+
+      <div class="card" th:if="${summary.hasWarnings()}">
+        <h3>Варто перевірити</h3>
+        <ul class="warnings">
+          <li th:each="w : ${summary.warnings}" th:text="${w}">Попередження</li>
+        </ul>
+      </div>
+
+      <div class="card small muted">
+        <div>Створено: <span th:text="${@fmt.instant(plan.createdAt)}">дата</span></div>
+        <div>Змінено: <span th:text="${@fmt.instant(plan.updatedAt)}">дата</span></div>
+        <div>Версія запису: <span th:text="${plan.version}">1</span></div>
+      </div>
+    </aside>
+  </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<link rel="stylesheet" th:href="@{/webjars/leaflet/1.9.4/dist/leaflet.css}">
+<script th:src="@{/webjars/leaflet/1.9.4/dist/leaflet.js}"></script>
+<script th:inline="javascript">
+  const points = /*[[${mapPoints}]]*/ [];
+</script>
+<script th:src="@{/js/route-map.js}"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+@startuml
+!include _style.iuml
+hide empty members
+set separator none
+skinparam dpi 200
+package "traveler-web (представлення)" {
+  class PlanController <<controller>>
+  class LocationController <<controller>>
+  class AdminController <<controller>>
+}
+package "traveler-core (бізнес-логіка)" {
+  class TravelPlanService <<service>> {
+    +search(actor, criteria)
+    +details(actor, planId)
+    +create / update / delete
+    +changeVisibility / copy
+    +statistics(actor)
+  }
+  class LocationService <<service>> {
+    +add(actor, planId, cmd)
+    +update(actor, locationId, cmd)
+    +move(actor, locationId, dir, version)
+    +delete(actor, locationId)
+  }
+  class UserService <<service>> {
+    +register(cmd)
+    +changeRole(actor, userId, role)
+    +setEnabled(actor, userId, enabled)
+  }
+  class RouteCalculator {
+    +distanceKm(...) : BigDecimal
+    +summarize(plan, route) : RouteSummary
+  }
+  interface TravelPlanPort <<port>> {
+    findById / lockById
+    insert / update / deleteById
+    search / statistics
+  }
+  interface LocationPort <<port>> {
+    findByPlanId / maxVisitOrder
+    insert / update / deleteById
+    reorder
+  }
+  interface UserPort <<port>>
+}
+package "traveler-persistence (доступ до даних)" {
+  class JpaTravelPlanAdapter
+  class JpaLocationAdapter
+  class JpaUserAdapter
+  interface TravelPlanRepository <<Spring Data>>
+  interface LocationRepository <<Spring Data>>
+  interface UserRepository <<Spring Data>>
+}
+PlanController --> TravelPlanService
+LocationController --> LocationService
+AdminController --> UserService
+AdminController --> TravelPlanService
+TravelPlanService --> RouteCalculator
+TravelPlanService --> TravelPlanPort
+TravelPlanService --> LocationPort
+TravelPlanService --> UserPort
+LocationService --> TravelPlanPort
+LocationService --> LocationPort
+UserService --> UserPort
+JpaTravelPlanAdapter ..|> TravelPlanPort
+JpaLocationAdapter ..|> LocationPort
+JpaUserAdapter ..|> UserPort
+JpaTravelPlanAdapter --> TravelPlanRepository
+JpaLocationAdapter --> LocationRepository
+JpaUserAdapter --> UserRepository
+@enduml

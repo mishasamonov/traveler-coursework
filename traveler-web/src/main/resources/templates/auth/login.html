@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Вхід')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('login')}"></header>
+<main class="page">
+  <div class="narrow">
+    <h1>Вхід до Traveler</h1>
+    <p class="muted">Увійдіть, щоб створювати власні плани подорожей і керувати маршрутами.</p>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <div class="alert error" th:if="${param.error}">Неправильна електронна пошта або пароль.</div>
+    <div class="alert error" th:if="${param.blocked}">Обліковий запис заблоковано адміністратором.</div>
+    <div class="alert warn" th:if="${param.expired}">Сесію завершено: змінилися права облікового запису. Увійдіть знову.</div>
+
+    <form class="card form" method="post" th:action="@{/login}">
+      <div class="field">
+        <label for="email">Електронна пошта</label>
+        <input type="email" id="email" name="email" th:value="${email}" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Пароль</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" type="submit">Увійти</button>
+        <a class="btn ghost" th:href="@{/register}">Створити обліковий запис</a>
+      </div>
+    </form>
+  </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:with="title=${scope == 'PUBLIC'} ? 'Каталог маршрутів' : (${scope == 'OWNED'} ? 'Мої подорожі' : 'Усі плани подорожей'),
+               active=${scope == 'PUBLIC'} ? 'catalog' : (${scope == 'OWNED'} ? 'my' : 'admin')">
+<head th:replace="~{fragments/layout :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header(${active})}"></header>
+<main class="page">
+  <div class="crumbs" th:if="${scope == 'ALL'}"><a th:href="@{/admin}">Адміністрування</a> / Плани</div>
+  <div class="page-head">
+    <div>
+      <h1 th:text="${title}">Каталог</h1>
+      <p class="muted" th:switch="${scope}">
+        <span th:case="'PUBLIC'">Публічні плани мандрівників. Знайдіть маршрут за містом, датами або бюджетом.</span>
+        <span th:case="'OWNED'">Ваші плани — публічні й приватні. Бачите їх лише ви та адміністратор.</span>
+        <span th:case="*">Усі плани системи, зокрема приватні та створені через REST API TravelerAPI (без власника).</span>
+      </p>
+    </div>
+    <a class="btn primary" sec:authorize="isAuthenticated()" th:href="@{/plans/new}">+ Новий план</a>
+  </div>
+  <div th:replace="~{fragments/layout :: flash}"></div>
+
+  <form class="card" method="get" th:action="@{${listPath}}" th:object="${filter}">
+    <div class="filters">
+      <div class="wide">
+        <label for="text">Назва або опис</label>
+        <input type="search" id="text" th:field="*{text}" placeholder="наприклад, вихідні">
+      </div>
+      <div>
+        <label for="place">Місце в маршруті</label>
+        <input type="search" id="place" th:field="*{place}" placeholder="Львів, Рим…">
+      </div>
+      <div>
+        <label for="status">Статус</label>
+        <select id="status" th:field="*{status}">
+          <option value="">Будь-який</option>
+          <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label()}">Статус</option>
+        </select>
+      </div>
+      <div>
+        <label for="sort">Сортування</label>
+        <select id="sort" th:field="*{sort}">
+          <option th:each="s : ${sortOrders}" th:value="${s}" th:text="${s.label()}">Сорт</option>
+        </select>
+      </div>
+      <div th:if="${scope == 'ALL'}">
+        <label for="owner">Власник</label>
+        <input type="search" id="owner" th:field="*{owner}" placeholder="e-mail або ім'я">
+      </div>
+      <div>
+        <label for="dateFrom">Подорож з</label>
+        <input type="date" id="dateFrom" th:field="*{dateFrom}">
+      </div>
+      <div>
+        <label for="dateTo">по</label>
+        <input type="date" id="dateTo" th:field="*{dateTo}">
+      </div>
+      <div>
+        <label for="currency">Валюта</label>
+        <select id="currency" th:field="*{currency}">
+          <option value="">Будь-яка</option>
+          <option th:each="c : ${currencies}" th:value="${c}" th:text="${c}">UAH</option>
+        </select>
+      </div>
+      <div>
+        <label for="maxBudget">Бюджет до</label>
+        <input type="number" id="maxBudget" min="0" step="0.01" th:field="*{maxBudget}">
+      </div>
+      <div class="buttons">
+        <button class="btn primary" type="submit">Знайти</button>
+        <a class="btn ghost" th:if="${filter.filtered}" th:href="@{${listPath}}">Скинути</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="alert error" th:if="${filterError}" th:text="${filterError}">Помилка фільтра</div>
+
+  <th:block th:if="${page != null}">
+    <div class="result-bar">
+      <span th:text="'Знайдено: ' + ${@fmt.count(page.totalElements, 'план', 'плани', 'планів')}">Знайдено</span>
+      <span th:if="${page.totalPages > 1}"
+            th:text="'Сторінка ' + ${page.page + 1} + ' з ' + ${page.totalPages}">Сторінка</span>
+    </div>
+
+    <div class="card empty" th:if="${page.empty}">
+      <h2 class="h3">Нічого не знайдено</h2>
+      <p th:if="${scope == 'OWNED' and !filter.filtered}">У вас ще немає планів. Створіть перший або скопіюйте маршрут із каталогу.</p>
+      <p th:unless="${scope == 'OWNED' and !filter.filtered}">Змініть умови пошуку.</p>
+    </div>
+
+    <div class="plan-grid" th:if="${scope != 'ALL' and !page.empty}">
+      <th:block th:each="p : ${page.content}"><a th:replace="~{fragments/layout :: planCard(${p})}"></a></th:block>
+    </div>
+
+    <div class="card card-flush" th:if="${scope == 'ALL' and !page.empty}">
+      <table class="data">
+        <thead>
+        <tr><th>План</th><th>Власник</th><th>Дати</th><th>Статус</th><th class="num">Локацій</th>
+          <th class="num">Бюджет</th><th>Доступ</th><th>Змінено</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${page.content}">
+          <td><a th:href="@{/plans/{id}(id=${p.id})}" th:text="${p.title}">Назва</a></td>
+          <td th:text="${p.ownerName} ?: '— (TravelerAPI)'">Власник</td>
+          <td class="nowrap" th:text="${@fmt.period(p.startDate, p.endDate)}">Дати</td>
+          <td><span class="badge" th:classappend="${p.status.name()}" th:text="${p.status.label()}">Статус</span></td>
+          <td class="num" th:text="${p.locationCount}">0</td>
+          <td class="num" th:text="${@fmt.money(p.budget, p.currency)}">0</td>
+          <td><span class="badge" th:classappend="${p.isPublic} ? 'public' : 'private'"
+                    th:text="${p.isPublic} ? 'Публічний' : 'Приватний'">Доступ</span></td>
+          <td class="nowrap small muted" th:text="${@fmt.instant(p.updatedAt)}">Дата</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="pagination" th:if="${page.totalPages > 1}">
+      <a th:if="${page.hasPrevious()}" th:href="@{${filter.pageUrl(listPath, page.page - 1)}}">← Попередня</a>
+      <th:block th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}">
+        <span class="current" th:if="${i == page.page}" th:text="${i + 1}">1</span>
+        <a th:unless="${i == page.page}" th:href="@{${filter.pageUrl(listPath, i)}}" th:text="${i + 1}">2</a>
+      </th:block>
+      <a th:if="${page.hasNext()}" th:href="@{${filter.pageUrl(listPath, page.page + 1)}}">Наступна →</a>
+    </nav>
+  </th:block>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Адміністрування')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('admin')}"></header>
+<main class="page">
+  <div class="page-head">
+    <div>
+      <h1>Адміністрування</h1>
+      <p class="muted">Стан даних і роботи застосунку. Дані панелі «Стан системи» беруться з Spring Boot Actuator.</p>
+    </div>
+    <div class="actions">
+      <a class="btn" th:href="@{/admin/plans}">Усі плани</a>
+      <a class="btn" th:href="@{/admin/users}">Користувачі</a>
+    </div>
+  </div>
+  <div th:replace="~{fragments/layout :: flash}"></div>
+
+  <section class="stats">
+    <div class="stat"><div class="value" th:text="${stats.plans}">0</div>
+      <div class="label" th:text="'планів, з них публічних: ' + ${stats.publicPlans}">планів</div></div>
+    <div class="stat"><div class="value" th:text="${stats.locations}">0</div>
+      <div class="label" th:text="'локацій, у середньому ' + ${stats.averageLocationsPerPlan} + ' на план'">локацій</div></div>
+    <div class="stat"><div class="value" th:text="${stats.users}">0</div>
+      <div class="label" th:text="'користувачів, адміністраторів: ' + ${stats.administrators}">користувачів</div></div>
+    <div class="stat"><div class="value" th:text="${stats.ownerlessPlans}">0</div>
+      <div class="label">планів без власника (з TravelerAPI)</div></div>
+  </section>
+
+  <div class="grid-2" style="margin-top: 22px; grid-template-columns: 1fr 1fr">
+    <div class="card">
+      <h2 class="h3">Місця, що найчастіше трапляються в маршрутах</h2>
+      <table class="data">
+        <thead><tr><th>Локація</th><th class="num">Планів</th></tr></thead>
+        <tbody>
+        <tr th:each="p : ${stats.topPlaces}"><td th:text="${p.name}">Місце</td><td class="num" th:text="${p.count}">1</td></tr>
+        </tbody>
+      </table>
+      <h2 class="h3" style="margin-top:18px">Середній бюджет за валютами</h2>
+      <dl class="kv">
+        <th:block th:each="b : ${stats.averageBudgetByCurrency}">
+          <dt th:text="${b.key}">UAH</dt><dd th:text="${@fmt.money(b.value, b.key)}">0</dd>
+        </th:block>
+      </dl>
+      <p class="small muted" style="margin-top:14px"
+         th:text="'Маршрутів з розривами нумерації: ' + ${stats.plansWithOrderGaps}">0</p>
+    </div>
+
+    <div class="card">
+      <div class="actions" style="justify-content: space-between; margin-bottom: 10px">
+        <h2 class="h3" style="margin:0">Стан системи</h2>
+        <span class="badge" th:classappend="${system.status}" th:text="${system.status}">UP</span>
+      </div>
+      <dl class="kv">
+        <th:block th:each="c : ${system.components}">
+          <dt th:text="'health: ' + ${c.key}">db</dt><dd><span class="badge" th:classappend="${c.value}" th:text="${c.value}">UP</span></dd>
+        </th:block>
+        <dt>Час роботи</dt><dd th:text="${system.uptimeMinutes != null} ? ${#numbers.formatDecimal(system.uptimeMinutes, 1, 1, 'COMMA')} + ' хв' : '—'">0</dd>
+        <dt>Пам'ять heap</dt><dd th:text="${system.heapUsedMb != null} ? ${#numbers.formatDecimal(system.heapUsedMb, 1, 0, 'COMMA')} + (${system.heapMaxMb != null} ? ' з ' + ${#numbers.formatDecimal(system.heapMaxMb, 1, 0, 'COMMA')} : '') + ' МБ' : '—'">0</dd>
+        <dt>Процесор (процес)</dt><dd th:text="${system.cpuPercent != null} ? ${#numbers.formatDecimal(system.cpuPercent, 1, 1, 'COMMA')} + ' %' : '—'">0</dd>
+        <dt>Потоків JVM</dt><dd th:text="${system.threads != null} ? ${#numbers.formatDecimal(system.threads, 1, 0, 'COMMA')} : '—'">0</dd>
+        <dt>HTTP-запитів</dt><dd th:text="${system.httpRequests != null} ? ${#numbers.formatDecimal(system.httpRequests, 1, 0, 'COMMA')} + (${system.httpMeanMs != null} ? ', сер. ' + ${#numbers.formatDecimal(system.httpMeanMs, 1, 1, 'COMMA')} + ' мс' : '') : '—'">0</dd>
+        <dt>Помилок 5xx</dt><dd th:text="${#numbers.formatDecimal(system.httpErrors, 1, 0, 'COMMA')}">0</dd>
+        <dt>З'єднань з БД (активні / вільні / макс.)</dt>
+        <dd th:text="${system.dbActive != null} ? ${#numbers.formatDecimal(system.dbActive, 1, 0, 'COMMA')} + ' / ' + ${#numbers.formatDecimal(system.dbIdle, 1, 0, 'COMMA')} + ' / ' + ${#numbers.formatDecimal(system.dbMax, 1, 0, 'COMMA')} : '—'">0</dd>
+        <dt>Викликів бізнес-сервісів</dt><dd th:text="${system.serviceCalls != null} ? ${#numbers.formatDecimal(system.serviceCalls, 1, 0, 'COMMA')} + (${system.serviceMeanMs != null} ? ', сер. ' + ${#numbers.formatDecimal(system.serviceMeanMs, 1, 1, 'COMMA')} + ' мс' : '') : '—'">0</dd>
+      </dl>
+      <h2 class="h3" style="margin-top:18px">Вузли Actuator</h2>
+      <ul class="endpoint-list">
+        <li><a th:href="@{/actuator/health}" target="_blank">health</a></li>
+        <li><a th:href="@{/actuator/info}" target="_blank">info</a></li>
+        <li><a th:href="@{/actuator/metrics}" target="_blank">metrics</a></li>
+        <li><a th:href="@{/actuator/travel}" target="_blank">travel</a></li>
+        <li><a th:href="@{/actuator/flyway}" target="_blank">flyway</a></li>
+        <li><a th:href="@{/actuator/loggers}" target="_blank">loggers</a></li>
+        <li><a th:href="@{/actuator/httpexchanges}" target="_blank">httpexchanges</a></li>
+        <li><a th:href="@{/actuator/mappings}" target="_blank">mappings</a></li>
+        <li><a th:href="@{/actuator/scheduledtasks}" target="_blank">scheduledtasks</a></li>
+        <li><a th:href="@{/actuator/prometheus}" target="_blank">prometheus</a></li>
+      </ul>
+    </div>
+  </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

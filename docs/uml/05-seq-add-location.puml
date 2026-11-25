@@ -1,0 +1,33 @@
+@startuml
+!include _style.iuml
+autonumber
+actor "Мандрівник" as U
+participant "Spring Security" as S
+participant "LocationController" as C
+participant "LocationService\n(@Transactional)" as LS
+participant "TravelPlanPort\n(JPA-адаптер)" as PP
+participant "LocationPort\n(JPA-адаптер)" as LP
+database "PostgreSQL" as DB
+
+U -> S : POST /plans/{id}/locations\n(форма + CSRF-токен)
+S -> S : сесія, роль USER/ADMIN, CSRF
+S -> C : add(planId, LocationForm)
+C -> C : @Valid: назва, координати,\nчас відбуття ≥ прибуття
+alt помилки валідації форми
+  C --> U : форма з повідомленнями біля полів
+else форма коректна
+  C -> LS : add(actor, planId, command)
+  LS -> PP : lockById(planId)
+  PP -> DB : SELECT ... FROM travel_plans\nWHERE id = ? FOR UPDATE
+  DB --> PP : рядок плану (заблоковано)
+  LS -> LS : чи є actor власником\nабо адміністратором?
+  LS -> LS : бізнес-правила: дати в межах\nподорожі, координати парою
+  LS -> LP : maxVisitOrder(planId)
+  LP -> DB : SELECT COALESCE(MAX(visit_order), 0)
+  LS -> LP : insert(visit_order = max + 1, version = 1)
+  LP -> DB : INSERT INTO locations ...
+  LS --> C : Location (позиція N)
+  note over LS, DB : COMMIT знімає блокування плану:\nпаралельні додавання виконуються по черзі,\nпозиції не дублюються
+  C --> U : 302 → /plans/{id}#route\n«Локацію додано на позицію N»
+end
+@enduml

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Доступ заборонено')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('error')}"></header>
+<main class="page">
+  <div class="card error-page">
+    <div class="code">403</div>
+    <h1>Доступ заборонено</h1>
+    <p class="muted" th:text="${message} ?: 'У вашого облікового запису немає прав на цю дію.'">У вашого облікового запису немає прав на цю дію.</p>
+    
+    <div class="actions" style="justify-content:center">
+      <a class="btn primary" th:href="@{/}">На головну</a>
+      <a class="btn" th:href="@{/plans}">Каталог маршрутів</a>
+    </div>
+  </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,49 @@
+@startuml
+!include _style.iuml
+hide circle
+skinparam linetype ortho
+entity "app_users\n(розширення, V2)" as U {
+  * id : UUID <<PK>>
+  --
+  * email : VARCHAR(254) <<UNIQUE>>
+  * display_name : VARCHAR(100)
+  * password_hash : VARCHAR(100)
+  * role : VARCHAR(20)  USER | ADMIN
+  * enabled : BOOLEAN
+  * created_at : TIMESTAMPTZ
+}
+entity "travel_plans\n(БД лабораторних РСД, V1)" as P {
+  * id : UUID <<PK>>
+  --
+  * title : VARCHAR(200)
+  description : TEXT
+  start_date : DATE
+  end_date : DATE  ≥ start_date
+  budget : NUMERIC(10,2)  ≥ 0
+  * currency : VARCHAR(3)  ISO 4217
+  * is_public : BOOLEAN
+  * version : INTEGER  > 0
+  * created_at, updated_at : TIMESTAMPTZ
+  owner_id : UUID <<FK>> (V2)
+}
+entity "locations\n(БД лабораторних РСД, V1)" as L {
+  * id : UUID <<PK>>
+  --
+  * travel_plan_id : UUID <<FK>>
+  * name : VARCHAR(200)
+  address : TEXT
+  latitude : NUMERIC(10,6)  −90..90
+  longitude : NUMERIC(11,6)  −180..180
+  * visit_order : INTEGER  > 0
+  arrival_date, departure_date : TIMESTAMPTZ
+  budget : NUMERIC(10,2)  ≥ 0
+  notes : TEXT
+  * version : INTEGER  > 0
+  * created_at : TIMESTAMPTZ
+  ..
+  UNIQUE (travel_plan_id, visit_order)
+  DEFERRABLE INITIALLY IMMEDIATE
+}
+U |o--o{ P : "owner_id\nON DELETE SET NULL"
+P ||--o{ L : "travel_plan_id\nON DELETE CASCADE"
+@enduml

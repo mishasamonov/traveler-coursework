@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Головна')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('home')}"></header>
+<main class="page">
+  <div class="alert info" th:if="${param.logout}">Ви вийшли із системи.</div>
+  <div th:replace="~{fragments/layout :: flash}"></div>
+
+  <section class="hero">
+    <h1>Плануйте подорожі маршрутом, а не списком нотаток</h1>
+    <p>Створюйте план поїздки, додавайте локації — система сама визначить їхній порядок,
+      порахує відстані та порівняє витрати з бюджетом.</p>
+    <form th:action="@{/plans}" method="get">
+      <input type="search" name="place" placeholder="Куди хочете поїхати? Наприклад, Львів або Рим">
+      <button class="btn accent" type="submit">Знайти маршрути</button>
+    </form>
+    <svg class="route" viewBox="0 0 300 150" aria-hidden="true">
+      <path d="M20 120 C 70 40, 120 140, 170 70 S 250 30, 280 40" fill="none" stroke="#9fd3cf"
+            stroke-width="3" stroke-dasharray="7 7"/>
+      <circle cx="20" cy="120" r="9" fill="#d9692b"/><text x="20" y="124" font-size="10" fill="#fff" text-anchor="middle">1</text>
+      <circle cx="170" cy="70" r="9" fill="#d9692b"/><text x="170" y="74" font-size="10" fill="#fff" text-anchor="middle">2</text>
+      <circle cx="280" cy="40" r="9" fill="#d9692b"/><text x="280" y="44" font-size="10" fill="#fff" text-anchor="middle">3</text>
+    </svg>
+  </section>
+
+  <section class="features">
+    <div class="card feature">
+      <h2 class="h3"><span class="dot"></span>Маршрут з порядком</h2>
+      <p class="muted small">Нова локація автоматично стає наступною точкою маршруту, порядок можна змінювати.</p>
+    </div>
+    <div class="card feature">
+      <h2 class="h3"><span class="dot"></span>Бюджет і відстані</h2>
+      <p class="muted small">Для кожного плану видно довжину маршруту та скільки бюджету вже заплановано.</p>
+    </div>
+    <div class="card feature">
+      <h2 class="h3"><span class="dot"></span>Готові ідеї</h2>
+      <p class="muted small">Публічні маршрути інших мандрівників можна скопіювати й адаптувати під себе.</p>
+    </div>
+  </section>
+
+  <div class="page-head">
+    <div>
+      <h2>Нові публічні маршрути</h2>
+      <p class="muted" th:text="'У каталозі ' + ${@fmt.count(latest.totalElements, 'маршрут', 'маршрути', 'маршрутів')}">У каталозі</p>
+    </div>
+    <div class="actions">
+      <a class="btn" th:href="@{/plans}">Увесь каталог</a>
+      <a class="btn primary" sec:authorize="isAuthenticated()" th:href="@{/plans/new}">Новий план</a>
+      <a class="btn primary" sec:authorize="!isAuthenticated()" th:href="@{/register}">Почати планувати</a>
+    </div>
+  </div>
+  <div class="plan-grid">
+    <th:block th:each="p : ${latest.content}"><a th:replace="~{fragments/layout :: planCard(${p})}"></a></th:block>
+  </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,69 @@
+@startuml
+!include _style.iuml
+hide empty members
+set separator none
+skinparam dpi 200
+package "traveler-core.domain (предметна модель)" {
+  class TravelPlan <<record>> {
+    id : UUID
+    ownerId : UUID
+    title, description : String
+    startDate, endDate : LocalDate
+    budget : BigDecimal
+    currency : String
+    isPublic : boolean
+    version : int
+    +status(today) : PlanStatus
+    +days() : Long
+  }
+  class Location <<record>> {
+    id, travelPlanId : UUID
+    name, address, notes : String
+    latitude, longitude : BigDecimal
+    visitOrder : int
+    arrivalDate, departureDate : OffsetDateTime
+    budget : BigDecimal
+    version : int
+  }
+  class AppUser <<record>> {
+    id : UUID
+    email, displayName : String
+    passwordHash : String
+    role : Role
+    enabled : boolean
+  }
+  class Actor <<record>> {
+    userId : UUID
+    role : Role
+    +canView(plan) / canEdit(plan)
+  }
+  class RouteSummary <<record>> {
+    totalDistanceKm, plannedSpend
+    remaining, budgetUsagePercent
+    overBudget, warnings
+  }
+  class PlanDetails <<record>> {
+    plan, ownerName, locations
+    summary, status
+    editable, copyable
+  }
+  enum Role {
+    USER
+    ADMIN
+  }
+  enum PlanStatus {
+    DRAFT
+    UPCOMING
+    IN_PROGRESS
+    COMPLETED
+  }
+}
+AppUser "0..1" -- "0..*" TravelPlan : власник >
+TravelPlan "1" *-- "0..*" Location : маршрут
+PlanDetails --> TravelPlan
+PlanDetails --> "0..*" Location
+PlanDetails --> RouteSummary
+TravelPlan ..> PlanStatus
+AppUser --> Role
+Actor --> Role
+@enduml

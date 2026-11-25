@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Сторінку не знайдено')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('error')}"></header>
+<main class="page">
+  <div class="card error-page">
+    <div class="code">404</div>
+    <h1>Сторінку не знайдено</h1>
+    <p class="muted" th:text="${message} ?: 'Можливо, запис видалено, посилання застаріло або план є приватним.'">Можливо, запис видалено, посилання застаріло або план є приватним.</p>
+    
+    <div class="actions" style="justify-content:center">
+      <a class="btn primary" th:href="@{/}">На головну</a>
+      <a class="btn" th:href="@{/plans}">Каталог маршрутів</a>
+    </div>
+  </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

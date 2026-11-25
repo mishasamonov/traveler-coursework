@@ -1,0 +1,41 @@
+# PostgreSQL 16 for Traveler: the same image as in the «Розподілені сховища даних» labs.
+# Start: docker compose up -d   (port 5433 so it does not clash with other local PostgreSQL)
+name: traveler-coursework
+services:
+  postgres:
+    image: postgres:16.15-alpine
+    environment:
+      POSTGRES_DB: traveler
+      POSTGRES_USER: traveler
+      POSTGRES_PASSWORD: traveler_local
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - traveler-pg:/var/lib/postgresql/data
+      # Creates the separate database traveler_test for the integration tests.
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U traveler -d traveler"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  # Optional (docker compose --profile dds up -d): REST API TravelerAPI of the «Розподілені
+  # сховища даних» labs (image built in traveler-api-dds-lab1, branch lab3-docker) working on the
+  # SAME database. Plans created through it appear in Traveler as plans without an owner.
+  traveler-api:
+    profiles: ["dds"]
+    image: traveler-api:lab3
+    environment:
+      DATABASE_URL: postgres://traveler:traveler_local@postgres:5432/traveler
+      PORT: "4567"
+      LAB3_ALLOW_RESET: "false"
+    ports:
+      - "127.0.0.1:4567:4567"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  traveler-pg:

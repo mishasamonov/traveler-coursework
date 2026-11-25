@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      th:with="title=${plan == null} ? 'Новий план подорожі' : 'Редагування плану'">
+<head th:replace="~{fragments/layout :: head(${title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('my')}"></header>
+<main class="page" style="max-width: 860px">
+  <div class="crumbs">
+    <a th:href="@{/my/plans}">Мої подорожі</a> /
+    <a th:if="${plan != null}" th:href="@{/plans/{id}(id=${plan.id})}" th:text="${plan.title}">План</a>
+    <span th:if="${plan != null}">/</span>
+    <span th:text="${title}">Новий план</span>
+  </div>
+  <h1 th:text="${title}">Новий план подорожі</h1>
+  <p class="muted">Після збереження ви перейдете на сторінку плану, де можна додати локації маршруту.</p>
+
+  <form class="card form" method="post" th:object="${form}" novalidate
+        th:action="${plan == null} ? @{/plans} : @{/plans/{id}(id=${plan.id})}">
+    <div class="alert error" th:if="${#fields.hasGlobalErrors()}">
+      <span th:each="e : ${#fields.globalErrors()}" th:text="${e}">Помилка</span>
+      <div th:if="${conflict}" style="margin-top:6px">
+        <a th:href="@{/plans/{id}/edit(id=${plan.id})}">Відкрити актуальну версію плану</a>
+      </div>
+    </div>
+    <input type="hidden" th:field="*{version}">
+
+    <div class="field" th:classappend="${#fields.hasErrors('title')} ? 'error'">
+      <label for="title">Назва подорожі *</label>
+      <input type="text" id="title" th:field="*{title}" maxlength="200" placeholder="Наприклад, Карпати на травневі">
+      <div class="field-error" th:errors="*{title}">Помилка</div>
+    </div>
+
+    <div class="field" th:classappend="${#fields.hasErrors('description')} ? 'error'">
+      <label for="description">Опис</label>
+      <textarea id="description" th:field="*{description}" placeholder="Мета поїздки, з ким їдете, побажання"></textarea>
+      <div class="field-error" th:errors="*{description}">Помилка</div>
+    </div>
+
+    <div class="form-row">
+      <div class="field" th:classappend="${#fields.hasErrors('startDate')} ? 'error'">
+        <label for="startDate">Дата початку</label>
+        <input type="date" id="startDate" th:field="*{startDate}">
+        <div class="field-error" th:errors="*{startDate}">Помилка</div>
+      </div>
+      <div class="field" th:classappend="${#fields.hasErrors('endDate')} ? 'error'">
+        <label for="endDate">Дата завершення</label>
+        <input type="date" id="endDate" th:field="*{endDate}">
+        <div class="field-error" th:errors="*{endDate}">Помилка</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="field" th:classappend="${#fields.hasErrors('budget')} ? 'error'">
+        <label for="budget">Бюджет</label>
+        <input type="number" id="budget" min="0" step="0.01" th:field="*{budget}" placeholder="0.00">
+        <div class="hint">Загальна сума на подорож. Витрати на локації порівнюються з нею.</div>
+        <div class="field-error" th:errors="*{budget}">Помилка</div>
+      </div>
+      <div class="field" th:classappend="${#fields.hasErrors('currency')} ? 'error'">
+        <label for="currency">Валюта *</label>
+        <select id="currency" th:field="*{currency}">
+          <option th:each="c : ${currencies}" th:value="${c}" th:text="${c}">UAH</option>
+        </select>
+        <div class="field-error" th:errors="*{currency}">Помилка</div>
+      </div>
+    </div>
+
+    <label class="check">
+      <input type="checkbox" th:field="*{publicPlan}">
+      <span><b>Публічний план</b><br><span class="small muted">План з'явиться в каталозі, інші мандрівники зможуть переглянути й скопіювати маршрут.</span></span>
+    </label>
+
+    <div class="form-actions">
+      <button class="btn primary" type="submit" th:text="${plan == null} ? 'Створити план' : 'Зберегти зміни'">Зберегти</button>
+      <a class="btn ghost" th:href="${plan == null} ? @{/my/plans} : @{/plans/{id}(id=${plan.id})}">Скасувати</a>
+    </div>
+  </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

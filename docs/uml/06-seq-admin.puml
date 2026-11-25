@@ -1,0 +1,32 @@
+@startuml
+!include _style.iuml
+autonumber
+actor "Адміністратор" as A
+participant "Spring Security" as S
+participant "AdminController\n@PreAuthorize(ADMIN)" as C
+participant "UserService" as US
+participant "UserPort" as UP
+participant "SessionTerminator\n(SessionRegistry)" as ST
+actor "Заблокований\nкористувач" as B
+
+A -> S : POST /admin/users/{id}/enabled\nenabled=false
+S -> S : правило /admin/** → ROLE_ADMIN
+S -> C : setEnabled(id, false)
+C -> US : setEnabled(actor, id, false)
+US -> US : actor.isAdmin()? не сам себе?\nчи лишиться активний адміністратор?
+alt правило порушено
+  US --> C : ValidationException
+  C --> A : повідомлення про помилку
+else дозволено
+  US -> UP : update(enabled = false)
+  UP --> US : AppUser
+  US --> C : AppUser
+  C -> ST : expireSessionsOf(id)
+  ST -> ST : SessionInformation.expireNow()
+  C --> A : «Заблоковано: ...»
+  B -> S : наступний запит
+  S --> B : 302 → /login?expired
+  B -> S : спроба входу
+  S --> B : DisabledException → /login?blocked
+end
+@enduml
